@@ -43,18 +43,17 @@ jobs:
             ${{ runner.os }}-go-
 
       # Check go fmt output because it does not report non-zero when there are fmt changes
-      # - name: check go fmt
-      #   run: |
-      #     files=$(go fmt ./...)
-      #       if [ -n "$files" ]; then
-      #         echo "The following file(s) do not conform to go fmt:"
-      #         echo "$files"
-      #         exit 1
-      #       fi
+      - name: check go fmt
+        run: |
+          files=$(go fmt ./...)
+            if [ -n "$files" ]; then
+              echo "The following file(s) do not conform to go fmt:"
+              echo "$files"
+              exit 1
+            fi
 
       - name: Install gotestsum
-        run: |
-          go install gotest.tools/gotestsum@v1.7.0
+        run: go install gotest.tools/gotestsum@v1.7.0
       
       - name: mkdir test results path
         run: mkdir -p ${{env.TEST_RESULTS_PATH}}
@@ -64,11 +63,16 @@ jobs:
 
       - name: Run go tests 
         run: |
-          $(go env GOPATH)/bin/gotestsum --junitfile ${{env.TEST_RESULTS_PATH}}/gotestsum-report.xml --format testname ./... -- -p 2
+          PACKAGE_NAMES=$(go list ./...)
+          echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
+          echo $PACKAGE_NAMES
+          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -vet=on -coverprofile=linux_cov_*.part $PACKAGE_NAMES
       
       # Save coverage report parts
       - name: persist to workspace
         uses: actions/upload-artifact@v3
+        with:
+          path: linux_cov_*.part
 
   windows-tests:
     runs-on: windows-latest
@@ -105,15 +109,19 @@ jobs:
       - name: download go modules
         run: go mod download
           
-      - name: Install gotestsum
-        run: |
-          go install gotest.tools/gotestsum@v1.7.0
+      - name: install gotestsum
+        run: go install gotest.tools/gotestsum@v1.7.0
       
-      # - name: run go tests
-      #   run: |
-      #     $(go env GOPATH)/bin/gotestsum --junitfile ${{env.TEST_RESULTS_PATH}}/gotestsum-report.xml --format testname ./... -- -p 2
+      - name: run go tests
+        run: |
+          PACKAGE_NAMES=$(go list ./...)
+          echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
+          echo $PACKAGE_NAMES
+          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -vet=off -coverprofile=win_cov_*.part $PACKAGE_NAMES
       
       # Save coverage report parts
       - name: persist to workspace
         uses: actions/upload-artifact@v3
-   
+        with:
+          path: win_cov_*.part
+    
