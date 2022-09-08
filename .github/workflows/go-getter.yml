@@ -6,6 +6,11 @@ name: go-getter
 
 on: [workflow_call, push]
 
+env:
+  TEST_RESULTS_PATH: /tmp/test-results
+  # might have to use datadog metrics here  
+  WIN_TEST_RESULTS: c:\Users\circleci\AppData\Local\Temp\test-results
+
 jobs:
 
   linux-tests:
@@ -15,21 +20,21 @@ jobs:
         goos: [linux]
         # need to double check if we need to programmatically update go version or have latest here
         go: ['1.15.13', '1.14.15']
-    
+    name: linux-tests ${{ matrix.go }} 
     steps:
       - uses: actions/checkout@v3
       
-      - name: set up go
+      - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: "${{ steps.get-go-version.outputs.go-version }}"
       
-      - name: determine go cache paths
+      - name: Determine Go cache paths
         id: go-cache-paths
         run: |
           echo "::set-output name=go-mod::$(go env GOMODCACHE)"
       
-      - name: set up go modules cache
+      - name: Set up Go modules cache
         uses: actions/cache@v3
         with:
           path: |
@@ -47,9 +52,12 @@ jobs:
       #         echo "$files"
       #         exit 1
       #       fi
-    
-      - name: run go tests
-        uses: ./.github/workflows/go-tests.yml@main
+        
+      - name: Set up gotestsum
+        run: go install gotest.tools/gotestsum@v1.7.0
+
+      - name: Run go tests
+        uses: clairelabry/go-getter/.github/workflows/go-tests.yml@main
   
       # Save coverage report parts
       - name: persist to workspace
