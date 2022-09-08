@@ -70,77 +70,50 @@ jobs:
       - name: persist to workspace
         uses: actions/upload-artifact@v3
 
-      # how to store test results + artifacts?
+  windows-tests:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        goos: [windows]
+        # need to double check if we need to programmatically update go version or have latest here
+        go: ['1.15.13', '1.14.15']
+      fail-fast: true
+    name: windows-tests ${{ matrix.go }}
+    # shell: bash --login -eo pipefail (need to figure out how to fit this in)
+    steps:
+      - name: run git config
+        run: git config --global core.autocrlf false
 
-  # windows-tests:
-  #   runs-on: windows-latest
-  #   strategy:
-  #     matrix:
-  #       goos: [windows]
-  #       # need to double check if we need to programmatically update go version or have latest here
-  #       go: ['1.15.13', '1.14.15']
-  #     fail-fast: true
-  #   name: windows-tests ${{ matrix.go }}
-  #   # shell: bash --login -eo pipefail (need to figure out how to fit this in)
-  #   steps:
-  #     - name: run git config
-  #       run: git config --global core.autocrlf false
-
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-go@v3
-  #       with:
-  #         go-version: ${{ matrix.go }}
-    
-  #     - name: attach to workspace
-  #       uses: actions/download-artifact@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
       
-  #     - name: setup (remove pre-installed Go)
-  #       run: |
-  #         rm -rf "c:\Go"
-  #         mkdir -p ${{ env.TEST_RESULTS_PATH }}/go-getter
+      - name: Setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{inputs.go-version}}
 
-  #     # need to add a restore_cache here
-
-  #     - name: install go version
-  #       run: |
-  #         if [ ! -d "c:\go" ]; then
-  #             echo "Cache not found, installing new version of go"
-  #             curl --fail --location https://dl.google.com/go/go<< parameters.go-version >>.windows-amd64.zip --output go.zip
-  #             unzip go.zip -d "/c"
-  #         fi
+      - name: Setup go mod cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            /go
+            c:\Windows\system32\config\systemprofile\go\pkg\mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
       
-  #     - name: download go modules
-  #       run: go mod download
-      
-  #     # cache dependecies (come back to this one)
-  #     - name: save go module cache
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: |
-  #           /go
-  #           c:\Windows\system32\config\systemprofile\go\pkg\mod
-  #         key: |
-  #           win-golang-<< parameters.go-version >>-cache-v1
-  #           win-gomod-cache-{{ checksum "go.mod" }}-v1
+      - name: download go modules
+        run: go mod download
           
-  #     - name: install gotestsum
-  #       run: |
-  #           curl --fail --location https://github.com/gotestyourself/gotestsum/releases/download/v<< parameters.gotestsum-version >>/gotestsum_<< parameters.gotestsum-version >>_windows_amd64.tar.gz --output gotestsum.tar.gz
-  #           tar -xvzf gotestsum.tar.gz
+      - name: Install gotestsum
+        run: |
+          go install gotest.tools/gotestsum@v1.7.0
       
-  #     - name: run go tests
-  #       uses: ./.github/workflows/go-tests.yml
-  #       env: 
-  #         cmd: "./gotestsum.exe"
-  #         platform: "win"
-  #         govet: "off"
+      # - name: run go tests
+      #   run: |
+      #     $(go env GOPATH)/bin/gotestsum --junitfile ${{env.TEST_RESULTS_PATH}}/gotestsum-report.xml --format testname ./... -- -p 2
       
-  #     # Save coverage report parts
-  #     - name: persist to workspace
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         path: win_cov_*.part
-      
-      # how to store test results + artifacts?
-      # checkout -- https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts#example
-    
+      # Save coverage report parts
+      - name: persist to workspace
+        uses: actions/upload-artifact@v3
+   
