@@ -52,7 +52,7 @@ jobs:
         
       # Run go tests with gotestsum here
       - name: run go tests
-        uses: .github/workflows/go-tests.yml
+        uses: ./.github/workflows/go-tests.yml
         env: 
           cmd: "gotestsum"
           platform: "linux"
@@ -121,7 +121,7 @@ jobs:
             tar -xvzf gotestsum.tar.gz
       
       - name: run go tests
-        uses: .github/workflows/go-tests.yml
+        uses: ./.github/workflows/go-tests.yml
         env: 
           cmd: "./gotestsum.exe"
           platform: "win"
