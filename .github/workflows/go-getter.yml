@@ -1,4 +1,3 @@
-# todo: fix job names to include programtic go versions next to them (like get-go-version/go build)
 # todo: go through entire workflow file and comment what each line means
 # todo: fix << parameters.go-version >> look into contexts
 # todo: ensure go-tests run properly
@@ -20,9 +19,13 @@ jobs:
       matrix:
         goos: [linux]
         # need to double check if we need to programmatically update go version or have latest here
-        goversion: ["1.15.13", "1.14.15"]
+        go: ['1.15.13', '1.14.15']
+    name: linux-test ${{ matrix.go }} 
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
   
       - name: attach to workspace
         uses: actions/download-artifact@v3
