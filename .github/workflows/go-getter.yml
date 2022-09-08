@@ -4,7 +4,7 @@
 
 name: go-getter
 
-on: [push]
+on: [workflow_call, push]
 
 env:
   TEST_RESULTS_PATH: /tmp/test-results
@@ -30,7 +30,7 @@ jobs:
       - name: attach to workspace
         uses: actions/download-artifact@v3
       
-      - name: create test results directory
+      - name: make test directory
         run: mkdir -p ${{ env.TEST_RESULTS_PATH }}/go-getter
       
       # cache dependecies (come back to this one)
@@ -39,6 +39,9 @@ jobs:
         with:
           path: go/pkg/mod
           key: linux-gomod-cache-v1-{{ checksum "go.mod" }}
+      
+      - name: Download go modules
+        run: go mod download
       
       # Check go fmt output because it does not report non-zero when there are fmt changes
       - name: check go fmt
@@ -50,12 +53,15 @@ jobs:
               exit 1
             fi
         
-      # Run go tests with gotestsum here
-      - name: run go tests
-        uses: ./.github/workflows/go-tests.yml
+      # Run go tests with gotestsum
+      - name: run go tests with gotestsum
         env: 
-          cmd: "gotestsum"
-          platform: "linux"
+          PACKAGE_NAMES: $(go list ./...)
+        run: |
+          echo "Running PACKAGE_NAMES | wc -w packages"
+          echo $PACKAGE_NAMES
+          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -coverprofile=linux_cov_$CIRCLE_NODE_INDEX.part $PACKAGE_NAMES
+          
   
       # Save coverage report parts
       - name: persist to workspace
