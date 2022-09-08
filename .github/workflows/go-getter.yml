@@ -4,7 +4,7 @@
 
 name: go-getter
 
-on: [repository_dispatch]
+on: [push]
 
 env:
   TEST_RESULTS_PATH: /tmp/test-results
