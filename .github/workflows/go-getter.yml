@@ -4,7 +4,7 @@
 
 name: go-getter
 
-on: [push]
+on: [repository_dispatch]
 
 env:
   TEST_RESULTS_PATH: /tmp/test-results
@@ -20,45 +20,50 @@ jobs:
         goos: [linux]
         # need to double check if we need to programmatically update go version or have latest here
         go: ['1.15.13', '1.14.15']
+    
     name: linux-tests ${{ matrix.go }} 
     steps:
-      - uses: actions/checkout@v3
       
-      - name: Set up Go
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup go
         uses: actions/setup-go@v3
         with:
-          go-version: "${{ steps.get-go-version.outputs.go-version }}"
-      
-      - name: Determine Go cache paths
-        id: go-cache-paths
-        run: |
-          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
-      
-      - name: Set up Go modules cache
+          go-version: ${{inputs.go-version}}
+
+      - name: Setup go mod cache
         uses: actions/cache@v3
         with:
           path: |
-            ${{ steps.go-cache-paths.outputs.go-mod }}
+            ~/.cache/go-build
+            ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
 
       # Check go fmt output because it does not report non-zero when there are fmt changes
-      # - name: check go fmt
-      #   run: |
-      #     files=$(go fmt ./...)
-      #       if [ -n "$files" ]; then
-      #         echo "The following file(s) do not conform to go fmt:"
-      #         echo "$files"
-      #         exit 1
-      #       fi
-        
-      - name: Set up gotestsum
-        run: go install gotest.tools/gotestsum@v1.7.0
+      - name: check go fmt
+        run: |
+          files=$(go fmt ./...)
+            if [ -n "$files" ]; then
+              echo "The following file(s) do not conform to go fmt:"
+              echo "$files"
+              exit 1
+            fi
 
-      - name: Run go tests
-        uses: ./.github/workflows/go-tests.yml
-  
+      - name: Install gotestsum
+        run: |
+          run: go install gotest.tools/gotestsum@v1.7.0
+      - run: mkdir -p ${{env.TEST_RESULTS_PATH}}
+
+      - name: go mod download
+        run: go mod download
+
+      - name: Run go tests 
+        run: |
+          gotestsum --junitfile ${{env.TEST_RESULTS_PATH}}/gotestsum-report.xml ./... -- -p 2 -cover -race
+      
       # Save coverage report parts
       - name: persist to workspace
         uses: actions/upload-artifact@v3
