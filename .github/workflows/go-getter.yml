@@ -62,7 +62,7 @@ jobs:
 
       - name: Run go tests 
         run: |
-          gotestsum --junitfile ${{env.TEST_RESULTS_PATH}}/gotestsum-report.xml ./... -- -p 2 -cover -race
+          $(go env GOPATH)/bin/gotestsum --junitfile ${{env.TEST_RESULTS_PATH}}/gotestsum-report.xml --format testname ./... -- -p 2 -cover -race
       
       # Save coverage report parts
       - name: persist to workspace
