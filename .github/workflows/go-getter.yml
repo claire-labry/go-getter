@@ -23,30 +23,25 @@ jobs:
     name: linux-tests ${{ matrix.go }} 
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
         with:
-          go-version: ${{ matrix.go }}
-  
-      - name: attach to workspace
-        uses: actions/download-artifact@v3
-      
-      - name: make test directory
-        run: mkdir -p ${{ env.TEST_RESULTS_PATH }}/go-getter
-      
-      # cache dependecies (come back to this one)
-      - name: save go module cache
+          go-version: "${{ steps.get-go-version.outputs.go-version }}"
+      - name: Determine Go cache paths
+        id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+      - name: Set up Go modules cache
         uses: actions/cache@v3
         with:
-          path: go/pkg/mod
-          key: linux-gomod-cache-v1-{{ checksum "go.mod" }}
-      
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          cache-dependency-path: go/pkg/mod
-          cache: true
-      - run: go mod download
-      
+          path: |
+            ${{ steps.go-cache-paths.outputs.go-build }}
+            ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       # Check go fmt output because it does not report non-zero when there are fmt changes
       - name: check go fmt
         run: |
@@ -57,15 +52,11 @@ jobs:
               exit 1
             fi
         
-      # Run go tests with gotestsum
-      - name: run go tests with gotestsum
-        env: 
-          PACKAGE_NAMES: $(go list ./...)
-        run: |
-          echo "Running PACKAGE_NAMES | wc -w packages"
-          echo $PACKAGE_NAMES
-          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -coverprofile=linux_cov_$CIRCLE_NODE_INDEX.part $PACKAGE_NAMES
-          
+      - name: Set up gotestsum
+        run: go install gotest.tools/gotestsum@v1.7.0
+
+      - name: Test
+        run: $(go env GOPATH)/bin/gotestsum --junitfile gotestsum-report.xml --format testname ./...
   
       # Save coverage report parts
       - name: persist to workspace
