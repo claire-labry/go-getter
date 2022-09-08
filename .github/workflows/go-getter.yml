@@ -20,7 +20,7 @@ jobs:
         goos: [linux]
         # need to double check if we need to programmatically update go version or have latest here
         go: ['1.15.13', '1.14.15']
-    name: linux-test ${{ matrix.go }} 
+    name: linux-tests ${{ matrix.go }} 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -29,9 +29,6 @@ jobs:
   
       - name: attach to workspace
         uses: actions/download-artifact@v3
-        with:
-        # need to double check this
-          path: .
       
       - name: create test results directory
         run: mkdir -p ${{ env.TEST_RESULTS_PATH }}/go-getter
@@ -74,20 +71,21 @@ jobs:
       matrix:
         goos: [windows]
         # need to double check if we need to programmatically update go version or have latest here
-        goversion: ["1.15.13", "1.14.15"]
+        go: ['1.15.13', '1.14.15']
       fail-fast: true
+    name: windows-tests ${{ matrix.go }}
     # shell: bash --login -eo pipefail (need to figure out how to fit this in)
     steps:
       - name: run git config
         run: git config --global core.autocrlf false
 
       - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
     
       - name: attach to workspace
         uses: actions/download-artifact@v3
-        with:
-        # need to double check this
-          path: .
       
       - name: setup (remove pre-installed Go)
         run: |
