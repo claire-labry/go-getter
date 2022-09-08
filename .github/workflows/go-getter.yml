@@ -57,6 +57,8 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.7.0
 
       - name: Run go tests
+        env:
+          TEST_RESULTS_PATH: /tmp/test-results
         run: gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race
   
       # Save coverage report parts
