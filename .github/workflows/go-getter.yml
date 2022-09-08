@@ -39,7 +39,12 @@ jobs:
         with:
           path: go/pkg/mod
           key: linux-gomod-cache-v1-{{ checksum "go.mod" }}
-        run: go mod download
+      
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          cache: true
+      - run: go mod download
       
       # Check go fmt output because it does not report non-zero when there are fmt changes
       - name: check go fmt
