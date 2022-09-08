@@ -4,7 +4,7 @@
 
 name: go-getter
 
-on: [workflow_call, push]
+on: [push]
 
 env:
   TEST_RESULTS_PATH: /tmp/test-results
@@ -57,7 +57,7 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.7.0
 
       - name: Run go tests
-        uses: clairelabry/go-getter/.github/workflows/go-tests.yml@main
+        uses: ./.github/workflows/go-tests.yml
   
       # Save coverage report parts
       - name: persist to workspace
