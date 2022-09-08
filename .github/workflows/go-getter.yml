@@ -23,14 +23,17 @@ jobs:
     name: linux-tests ${{ matrix.go }} 
     steps:
       - uses: actions/checkout@v3
+      
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: "${{ steps.get-go-version.outputs.go-version }}"
+      
       - name: Determine Go cache paths
         id: go-cache-paths
         run: |
           echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+      
       - name: Set up Go modules cache
         uses: actions/cache@v3
         with:
@@ -53,14 +56,12 @@ jobs:
       - name: Set up gotestsum
         run: go install gotest.tools/gotestsum@v1.7.0
 
-      - name: Test
-        run: $(go env GOPATH)/bin/gotestsum --junitfile gotestsum-report.xml --format testname ./...
+      - name: Run go tests
+        run: gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race
   
       # Save coverage report parts
       - name: persist to workspace
         uses: actions/upload-artifact@v3
-        with:
-          path: linux_cov_*.part
 
       # how to store test results + artifacts?
 
