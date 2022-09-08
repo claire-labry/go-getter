@@ -43,14 +43,14 @@ jobs:
             ${{ runner.os }}-go-
 
       # Check go fmt output because it does not report non-zero when there are fmt changes
-      - name: check go fmt
-        run: |
-          files=$(go fmt ./...)
-            if [ -n "$files" ]; then
-              echo "The following file(s) do not conform to go fmt:"
-              echo "$files"
-              exit 1
-            fi
+      # - name: check go fmt
+      #   run: |
+      #     files=$(go fmt ./...)
+      #       if [ -n "$files" ]; then
+      #         echo "The following file(s) do not conform to go fmt:"
+      #         echo "$files"
+      #         exit 1
+      #       fi
 
       - name: Install gotestsum
         run: |
