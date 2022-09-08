@@ -54,8 +54,10 @@ jobs:
 
       - name: Install gotestsum
         run: |
-          run: go install gotest.tools/gotestsum@v1.7.0
-      - run: mkdir -p ${{env.TEST_RESULTS_PATH}}
+          go install gotest.tools/gotestsum@v1.7.0
+      
+      - name: mkdir test results path
+        run: mkdir -p ${{env.TEST_RESULTS_PATH}}
 
       - name: go mod download
         run: go mod download
