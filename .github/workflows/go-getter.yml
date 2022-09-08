@@ -6,11 +6,6 @@ name: go-getter
 
 on: [workflow_call, push]
 
-env:
-  TEST_RESULTS_PATH: /tmp/test-results
-  # might have to use datadog metrics here  
-  WIN_TEST_RESULTS: c:\Users\circleci\AppData\Local\Temp\test-results
-
 jobs:
 
   linux-tests:
@@ -20,21 +15,21 @@ jobs:
         goos: [linux]
         # need to double check if we need to programmatically update go version or have latest here
         go: ['1.15.13', '1.14.15']
-    name: linux-tests ${{ matrix.go }} 
+    
     steps:
       - uses: actions/checkout@v3
       
-      - name: Set up Go
+      - name: set up go
         uses: actions/setup-go@v3
         with:
           go-version: "${{ steps.get-go-version.outputs.go-version }}"
       
-      - name: Determine Go cache paths
+      - name: determine go cache paths
         id: go-cache-paths
         run: |
           echo "::set-output name=go-mod::$(go env GOMODCACHE)"
       
-      - name: Set up Go modules cache
+      - name: set up go modules cache
         uses: actions/cache@v3
         with:
           path: |
@@ -52,14 +47,9 @@ jobs:
       #         echo "$files"
       #         exit 1
       #       fi
-        
-      - name: Set up gotestsum
-        run: go install gotest.tools/gotestsum@v1.7.0
-
-      - name: Run go tests
-        env:
-          TEST_RESULTS_PATH: /tmp/test-results
-        run: gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race
+    
+      - name: run go tests
+        uses: ./.github/workflows/go-tests.yml@main
   
       # Save coverage report parts
       - name: persist to workspace
@@ -67,74 +57,74 @@ jobs:
 
       # how to store test results + artifacts?
 
-  windows-tests:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        goos: [windows]
-        # need to double check if we need to programmatically update go version or have latest here
-        go: ['1.15.13', '1.14.15']
-      fail-fast: true
-    name: windows-tests ${{ matrix.go }}
-    # shell: bash --login -eo pipefail (need to figure out how to fit this in)
-    steps:
-      - name: run git config
-        run: git config --global core.autocrlf false
+  # windows-tests:
+  #   runs-on: windows-latest
+  #   strategy:
+  #     matrix:
+  #       goos: [windows]
+  #       # need to double check if we need to programmatically update go version or have latest here
+  #       go: ['1.15.13', '1.14.15']
+  #     fail-fast: true
+  #   name: windows-tests ${{ matrix.go }}
+  #   # shell: bash --login -eo pipefail (need to figure out how to fit this in)
+  #   steps:
+  #     - name: run git config
+  #       run: git config --global core.autocrlf false
 
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version: ${{ matrix.go }}
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-go@v3
+  #       with:
+  #         go-version: ${{ matrix.go }}
     
-      - name: attach to workspace
-        uses: actions/download-artifact@v3
+  #     - name: attach to workspace
+  #       uses: actions/download-artifact@v3
       
-      - name: setup (remove pre-installed Go)
-        run: |
-          rm -rf "c:\Go"
-          mkdir -p ${{ env.TEST_RESULTS_PATH }}/go-getter
+  #     - name: setup (remove pre-installed Go)
+  #       run: |
+  #         rm -rf "c:\Go"
+  #         mkdir -p ${{ env.TEST_RESULTS_PATH }}/go-getter
 
-      # need to add a restore_cache here
+  #     # need to add a restore_cache here
 
-      - name: install go version
-        run: |
-          if [ ! -d "c:\go" ]; then
-              echo "Cache not found, installing new version of go"
-              curl --fail --location https://dl.google.com/go/go<< parameters.go-version >>.windows-amd64.zip --output go.zip
-              unzip go.zip -d "/c"
-          fi
+  #     - name: install go version
+  #       run: |
+  #         if [ ! -d "c:\go" ]; then
+  #             echo "Cache not found, installing new version of go"
+  #             curl --fail --location https://dl.google.com/go/go<< parameters.go-version >>.windows-amd64.zip --output go.zip
+  #             unzip go.zip -d "/c"
+  #         fi
       
-      - name: download go modules
-        run: go mod download
+  #     - name: download go modules
+  #       run: go mod download
       
-      # cache dependecies (come back to this one)
-      - name: save go module cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            /go
-            c:\Windows\system32\config\systemprofile\go\pkg\mod
-          key: |
-            win-golang-<< parameters.go-version >>-cache-v1
-            win-gomod-cache-{{ checksum "go.mod" }}-v1
+  #     # cache dependecies (come back to this one)
+  #     - name: save go module cache
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: |
+  #           /go
+  #           c:\Windows\system32\config\systemprofile\go\pkg\mod
+  #         key: |
+  #           win-golang-<< parameters.go-version >>-cache-v1
+  #           win-gomod-cache-{{ checksum "go.mod" }}-v1
           
-      - name: install gotestsum
-        run: |
-            curl --fail --location https://github.com/gotestyourself/gotestsum/releases/download/v<< parameters.gotestsum-version >>/gotestsum_<< parameters.gotestsum-version >>_windows_amd64.tar.gz --output gotestsum.tar.gz
-            tar -xvzf gotestsum.tar.gz
+  #     - name: install gotestsum
+  #       run: |
+  #           curl --fail --location https://github.com/gotestyourself/gotestsum/releases/download/v<< parameters.gotestsum-version >>/gotestsum_<< parameters.gotestsum-version >>_windows_amd64.tar.gz --output gotestsum.tar.gz
+  #           tar -xvzf gotestsum.tar.gz
       
-      - name: run go tests
-        uses: ./.github/workflows/go-tests.yml
-        env: 
-          cmd: "./gotestsum.exe"
-          platform: "win"
-          govet: "off"
+  #     - name: run go tests
+  #       uses: ./.github/workflows/go-tests.yml
+  #       env: 
+  #         cmd: "./gotestsum.exe"
+  #         platform: "win"
+  #         govet: "off"
       
-      # Save coverage report parts
-      - name: persist to workspace
-        uses: actions/upload-artifact@v3
-        with:
-          path: win_cov_*.part
+  #     # Save coverage report parts
+  #     - name: persist to workspace
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         path: win_cov_*.part
       
       # how to store test results + artifacts?
       # checkout -- https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts#example
