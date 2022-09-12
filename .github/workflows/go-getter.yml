@@ -1,6 +1,4 @@
-# todo: go through entire workflow file and comment what each line means
 # todo: fix << parameters.go-version >> look into contexts
-# todo: ensure go-tests run properly
 
 name: go-getter
 
@@ -18,19 +16,17 @@ jobs:
     strategy:
       matrix:
         goos: [linux]
-        # need to double check if we need to programmatically update go version or have latest here
-        go: ['1.15.13', '1.14.15']
-    
-    name: linux-tests ${{ matrix.go }} 
+
+    name: linux-tests
     steps:
-      
+
       - name: Checkout code
         uses: actions/checkout@v3
       
       - name: Setup go
         uses: actions/setup-go@v3
         with:
-          go-version: ${{inputs.go-version}}
+          go-version: 1.19
 
       - name: Setup go mod cache
         uses: actions/cache@v3
@@ -54,7 +50,7 @@ jobs:
             fi
 
       - name: Install gotestsum
-        run: go install gotest.tools/gotestsum@v1.7.0
+        run: go install gotest.tools/gotestsum@v1.8.2
       
       - name: mkdir test results path
         run: mkdir -p ${{env.TEST_RESULTS_PATH}}
@@ -80,10 +76,9 @@ jobs:
     strategy:
       matrix:
         goos: [windows]
-        # need to double check if we need to programmatically update go version or have latest here
-        go: ['1.15.13', '1.14.15']
       fail-fast: true
-    name: windows-tests ${{ matrix.go }}
+    
+    name: windows-tests
     steps:
       - name: run git config
         run: git config --global core.autocrlf false
@@ -94,7 +89,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v3
         with:
-          go-version: ${{inputs.go-version}}
+          go-version: 1.19
 
       - name: Setup go mod cache
         uses: actions/cache@v3
@@ -110,7 +105,7 @@ jobs:
         run: go mod download
           
       - name: install gotestsum
-        run: go install gotest.tools/gotestsum@v1.7.0
+        run: go install gotest.tools/gotestsum@v1.8.2
       
       - name: run go tests
         shell: bash
