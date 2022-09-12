@@ -51,6 +51,7 @@ jobs:
               echo "$files"
               exit 1
             fi
+          go fmt ./...
 
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.7.0
@@ -83,7 +84,6 @@ jobs:
         go: ['1.15.13', '1.14.15']
       fail-fast: true
     name: windows-tests ${{ matrix.go }}
-    # shell: bash --login -eo pipefail (need to figure out how to fit this in)
     steps:
       - name: run git config
         run: git config --global core.autocrlf false
@@ -113,6 +113,7 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.7.0
       
       - name: run go tests
+        shell: bash
         run: |
           PACKAGE_NAMES=$(go list ./...)
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
