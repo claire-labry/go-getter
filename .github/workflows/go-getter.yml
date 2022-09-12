@@ -33,12 +33,13 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
+            ~/.cache/go-build
             ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      # Check go fmt output because it does not report non-zero when there are fmt changes
       
+      # Check go fmt output because it does not report non-zero when there are fmt changes
       - name: Check go fmt
         run: |
           go fmt ./...
@@ -85,8 +86,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            /go
-            c:\Windows\system32\config\systemprofile\go\pkg\mod
+            ~\AppData\Local\go-build
+            ~\go\pkg\mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
