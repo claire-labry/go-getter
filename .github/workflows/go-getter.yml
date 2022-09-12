@@ -63,13 +63,13 @@ jobs:
           PACKAGE_NAMES=$(go list ./...)
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
           echo $PACKAGE_NAMES
-          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -vet=on -coverprofile=linux_cov_*.part $PACKAGE_NAMES
+          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -vet=on -coverprofile=linux_cov.part $PACKAGE_NAMES
       
       # Save coverage report parts
       - name: persist to workspace
         uses: actions/upload-artifact@v3
         with:
-          path: linux_cov_*.part
+          path: linux_cov.part
 
   windows-tests:
     runs-on: windows-latest
@@ -113,11 +113,11 @@ jobs:
           PACKAGE_NAMES=$(go list ./...)
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
           echo $PACKAGE_NAMES
-          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -vet=off -coverprofile=win_cov_*.part $PACKAGE_NAMES
+          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -vet=off -coverprofile=win_cov.part $PACKAGE_NAMES
       
       # Save coverage report parts
       - name: persist to workspace
         uses: actions/upload-artifact@v3
         with:
-          path: win_cov_*.part
+          path: win_cov.part
     
