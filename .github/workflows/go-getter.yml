@@ -13,28 +13,22 @@ jobs:
 
   linux-tests:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        goos: [linux]
-      fail-fast: true
-
+    
     steps:
-
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v3
       - name: Setup go
         uses: actions/setup-go@v3
         with:
           go-version: 1.19
-      
-      - name: mkdir test results path
-        run: mkdir -p ${{env.TEST_RESULTS_PATH}}
 
-      - name: go mod download
+      - name: Create test directory
+        run: |
+          mkdir -p ${{env.TEST_RESULTS_PATH}}
+
+      - name: Download go modules
         run: go mod download
-
-      - name: Setup go mod cache
+      
+      - name: Setup cache for go modules
         uses: actions/cache@v3
         with:
           path: |
@@ -42,9 +36,9 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
       # Check go fmt output because it does not report non-zero when there are fmt changes
-      - name: check go fmt
+      
+      - name: Check go fmt
         run: |
           go fmt ./...
           files=$(go fmt ./...)
@@ -53,7 +47,6 @@ jobs:
               echo "$files"
               exit 1
             fi
-
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.8.2
       
@@ -65,7 +58,7 @@ jobs:
           gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -coverprofile=linux_cov.part $PACKAGE_NAMES
       
       # Save coverage report parts
-      - name: Upload and Save Artifacts
+      - name: Upload and save artifacts
         uses: actions/upload-artifact@v3
         with:
           name: linux test results
@@ -73,24 +66,21 @@ jobs:
 
   windows-tests:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        goos: [windows]
-      fail-fast: true
     
     steps:
-      - name: run git config
+      - name: Run git config
         run: git config --global core.autocrlf false
 
-      - name: Checkout code
         uses: actions/checkout@v3
-      
       - name: Setup go
         uses: actions/setup-go@v3
         with:
           go-version: 1.19
 
-      - name: Setup go mod cache
+      - name: Download go modules
+        run: go mod download
+        
+      - name: Setup cache for go modules
         uses: actions/cache@v3
         with:
           path: |
@@ -100,13 +90,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       
-      - name: download go modules
-        run: go mod download
-          
-      - name: install gotestsum
+      - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.8.2
       
-      - name: run go tests
+      - name: Run go tests
         shell: bash
         run: |
           PACKAGE_NAMES=$(go list ./...)
@@ -115,7 +102,7 @@ jobs:
           gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -coverprofile=win_cov.part $PACKAGE_NAMES
       
       # Save coverage report parts
-      - name: Upload and Save Artifacts
+      - name: Upload and save artifacts
         uses: actions/upload-artifact@v3
         with:
           name: windows test results
