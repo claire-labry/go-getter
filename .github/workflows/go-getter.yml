@@ -16,8 +16,8 @@ jobs:
     strategy:
       matrix:
         goos: [linux]
+      fail-fast: true
 
-    name: linux-tests
     steps:
 
       - name: Checkout code
@@ -27,12 +27,17 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.19
+      
+      - name: mkdir test results path
+        run: mkdir -p ${{env.TEST_RESULTS_PATH}}
+
+      - name: go mod download
+        run: go mod download
 
       - name: Setup go mod cache
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cache/go-build
             ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
@@ -52,23 +57,18 @@ jobs:
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.8.2
       
-      - name: mkdir test results path
-        run: mkdir -p ${{env.TEST_RESULTS_PATH}}
-
-      - name: go mod download
-        run: go mod download
-
       - name: Run go tests 
         run: |
           PACKAGE_NAMES=$(go list ./...)
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
           echo $PACKAGE_NAMES
-          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -coverprofile=linux_cov.part $PACKAGE_NAMES
+          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -args -vet -coverprofile=linux_cov.part $PACKAGE_NAMES
       
       # Save coverage report parts
-      - name: persist to workspace
+      - name: Upload and Save Artifacts
         uses: actions/upload-artifact@v3
         with:
+          name: linux test results
           path: linux_cov.part
 
   windows-tests:
@@ -78,7 +78,6 @@ jobs:
         goos: [windows]
       fail-fast: true
     
-    name: windows-tests
     steps:
       - name: run git config
         run: git config --global core.autocrlf false
@@ -113,11 +112,12 @@ jobs:
           PACKAGE_NAMES=$(go list ./...)
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
           echo $PACKAGE_NAMES
-          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -vet=off -coverprofile=win_cov.part $PACKAGE_NAMES
+          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -coverprofile=win_cov.part $PACKAGE_NAMES
       
       # Save coverage report parts
-      - name: persist to workspace
+      - name: Upload and Save Artifacts
         uses: actions/upload-artifact@v3
         with:
+          name: windows test results
           path: win_cov.part
     
