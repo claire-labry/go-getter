@@ -24,7 +24,7 @@ jobs:
 
       - name: Create test directory
         run: |
-          mkdir -p ${{env.TEST_RESULTS_PATH}}
+          mkdir -p ${{ env.TEST_RESULTS_PATH }}
 
       - name: Download go modules
         run: go mod download
@@ -33,7 +33,6 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cache/go-build
             ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
@@ -92,7 +91,6 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~\AppData\Local\go-build
             ~\go\pkg\mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
